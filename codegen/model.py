@@ -31,6 +31,8 @@ except ImportError:
 
 from evalplus.gen.util import openai_request
 
+from heal import build_token_prefix_map, get_start_decoding, token_healing
+
 EOS = [
     "<|endoftext|>",
     "<|endofmask|>",
@@ -245,17 +247,39 @@ class HfTorchDecoder(DecoderBase):
         return outputs
 
 
-class GenenralHfTorchDecoder(HfTorchDecoder):
+class GeneralHfTorchDecoder(HfTorchDecoder):
     def __init__(self, name: str, **kwargs):
         super().__init__(name=name, **kwargs)
         self.eos += ["\n```\n"]
         print(f"EOS strings: {self.eos}")
         self.tokenizer = AutoTokenizer.from_pretrained(self.name)
+        self.token_map = None
 
     def codegen(
-        self, prompt: str, do_sample: bool = True, num_samples: int = 200
+        self,
+        prompt: str,
+        do_sample: bool = True,
+        num_samples: int = 200,
+        use_token_healing=False,
+        token_healing_sample_constrained=False,
+        token_healing_sample_predictions=False,
     ) -> List[str]:
         prompt = make_chat_prompt(prompt, self.tokenizer)
+        if use_token_healing:
+            if not self.token_map:
+                self.token_map = build_token_prefix_map(self.tokenizer)
+            encoded = self.tokenizer.encode(prompt)
+            matches = get_start_decoding(encoded)
+            healed_prompt = token_healing(
+                self,
+                self.tokenizer,
+                matches,
+                encoded,
+                sample_constrained=token_healing_sample_constrained,
+                sample_predictions=token_healing_sample_predictions,
+            )
+            prompt = healed_prompt
+
         return HfTorchDecoder.codegen(self, prompt, do_sample, num_samples)
 
 
@@ -412,7 +436,7 @@ def make_model(
             tp=tp,
         )
     elif backend == "hf":
-        return GenenralHfTorchDecoder(
+        return GeneralHfTorchDecoder(
             name=model,
             batch_size=batch_size,
             temperature=temperature,

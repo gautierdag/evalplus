@@ -44,6 +44,9 @@ def codegen(
     id_range=None,
     version="default",
     resume=True,
+    use_token_healing: bool = False,
+    token_healing_sample_constrained: bool = False,
+    token_healing_sample_predictions: bool = False,
 ):
     with Progress(
         TextColumn(f"{dataset} •" + "[progress.percentage]{task.percentage:>3.0f}%"),
@@ -94,6 +97,9 @@ def codegen(
                     task["prompt"],
                     do_sample=not greedy,
                     num_samples=n_samples - sidx,
+                    use_token_healing=use_token_healing,
+                    token_healing_sample_constrained=token_healing_sample_constrained,
+                    token_healing_sample_predictions=token_healing_sample_predictions,
                 )
                 assert outputs, "No outputs from model!"
                 for impl in outputs:
@@ -125,6 +131,9 @@ def main(
     version: str = "default",
     backend: str = "vllm",
     base_url: str = None,
+    use_token_healing: bool = False,
+    token_healing_sample_constrained: bool = False,
+    token_healing_sample_predictions: bool = False,
     tp: int = 1,
 ):
     assert dataset in ["humaneval", "mbpp"], f"Invalid dataset {dataset}"
@@ -167,6 +176,9 @@ def main(
         resume=resume,
         id_range=id_range,
         version=version,
+        use_token_healing=use_token_healing,
+        token_healing_sample_constrained=token_healing_sample_constrained,
+        token_healing_sample_predictions=token_healing_sample_predictions,
     )
 
 
