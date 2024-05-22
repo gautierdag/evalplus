@@ -269,7 +269,7 @@ class GeneralHfTorchDecoder(HfTorchDecoder):
             if not self.token_map:
                 self.token_map = build_token_prefix_map(self.tokenizer)
             encoded = self.tokenizer.encode(prompt)
-            matches = get_start_decoding(encoded)
+            matches = get_start_decoding(self.token_map, self.tokenizer, encoded)
             healed_prompt = token_healing(
                 self,
                 self.tokenizer,
