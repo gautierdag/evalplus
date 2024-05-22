@@ -271,7 +271,7 @@ class GeneralHfTorchDecoder(HfTorchDecoder):
             encoded = self.tokenizer.encode(prompt)
             matches = get_start_decoding(self.token_map, self.tokenizer, encoded)
             healed_prompt = token_healing(
-                self,
+                self.model,
                 self.tokenizer,
                 matches,
                 encoded,
