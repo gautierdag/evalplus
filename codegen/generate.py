@@ -129,7 +129,7 @@ def main(
     greedy: bool = False,
     id_range: List = None,
     version: str = "default",
-    backend: str = "vllm",
+    backend: str = "hf",
     base_url: str = None,
     use_token_healing: bool = False,
     token_healing_sample_constrained: bool = False,
@@ -164,7 +164,10 @@ def main(
         base_url=base_url,
         tp=tp,
     )
-    identifier = model.replace("/", "--") + f"_{backend}_temp_{temperature}"
+    identifier = (
+        model.replace("/", "--")
+        + f"_{backend}_temp_{temperature}_th_{use_token_healing}_thsc_{token_healing_sample_constrained}_thsp_{token_healing_sample_predictions}"
+    )
     workdir = os.path.join(root, dataset, identifier)
     os.makedirs(workdir, exist_ok=True)
     codegen(
