@@ -182,7 +182,7 @@ def main(
     )
     identifier = (
         model.replace("/", "--")
-        + f"_{backend}_temp_{temperature}_th_{use_token_healing}_thsc_{token_healing_sample_constrained}_thsp_{token_healing_sample_predictions}"
+        + f"_{backend}_temp_{temperature}_th_{use_token_healing}_thsc_{token_healing_sample_constrained}_thsp_{token_healing_sample_predictions}_fix"
     )
     if n_char_back > 0:
         identifier += f"_ncb_{n_char_back}"
