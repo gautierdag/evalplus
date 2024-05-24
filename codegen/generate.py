@@ -1,6 +1,7 @@
 import os
 from os import PathLike
 from typing import List
+import json
 
 from model import DecoderBase, make_model
 from rich.progress import (
@@ -45,6 +46,7 @@ def codegen(
     version="default",
     resume=True,
     use_token_healing: bool = False,
+    n_char_back=0,
     token_healing_sample_constrained: bool = False,
     token_healing_sample_predictions: bool = False,
 ):
@@ -98,24 +100,37 @@ def codegen(
                     do_sample=not greedy,
                     num_samples=n_samples - sidx,
                     use_token_healing=use_token_healing,
+                    n_char_back=n_char_back,
                     token_healing_sample_constrained=token_healing_sample_constrained,
                     token_healing_sample_predictions=token_healing_sample_predictions,
                 )
                 assert outputs, "No outputs from model!"
-                for impl in outputs:
-                    try:
-                        with open(
-                            os.path.join(workdir, p_name, f"{sidx}.py"),
-                            "w",
-                            encoding="utf-8",
-                        ) as f:
-                            if model.is_direct_completion():
-                                f.write(task["prompt"] + impl)
-                            else:
-                                f.write(impl)
-                    except UnicodeEncodeError:
-                        continue
-                    sidx += 1
+                if isinstance(outputs, dict):
+                    # save to json
+                    with open(
+                        os.path.join(workdir, p_name, f"{sidx}.json"),
+                        "w",
+                        encoding="utf-8",
+                    ) as f:
+                        json.dump(impl, f)
+                    # save preds to .py
+                    outputs = outputs["predictions"]
+
+                if isinstance(outputs, list):
+                    for impl in outputs:
+                        try:
+                            with open(
+                                os.path.join(workdir, p_name, f"{sidx}.py"),
+                                "w",
+                                encoding="utf-8",
+                            ) as f:
+                                if model.is_direct_completion():
+                                    f.write(task["prompt"] + impl)
+                                else:
+                                    f.write(impl)
+                        except UnicodeEncodeError:
+                            continue
+                sidx += 1
 
 
 def main(
@@ -132,6 +147,7 @@ def main(
     backend: str = "hf",
     base_url: str = None,
     use_token_healing: bool = False,
+    n_char_back: int = 0,
     token_healing_sample_constrained: bool = False,
     token_healing_sample_predictions: bool = False,
     tp: int = 1,
@@ -168,6 +184,9 @@ def main(
         model.replace("/", "--")
         + f"_{backend}_temp_{temperature}_th_{use_token_healing}_thsc_{token_healing_sample_constrained}_thsp_{token_healing_sample_predictions}"
     )
+    if n_char_back > 0:
+        identifier += f"_ncb_{n_char_back}"
+
     workdir = os.path.join(root, dataset, identifier)
     os.makedirs(workdir, exist_ok=True)
     codegen(
@@ -180,6 +199,7 @@ def main(
         id_range=id_range,
         version=version,
         use_token_healing=use_token_healing,
+        n_char_back=n_char_back,
         token_healing_sample_constrained=token_healing_sample_constrained,
         token_healing_sample_predictions=token_healing_sample_predictions,
     )

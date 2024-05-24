@@ -79,6 +79,8 @@ Below is a Python script with a self-contained function that solves the problem 
         ],
         tokenize=False,
     ).split(_MAGIC_SPLITTER_)[0]
+    # remove bos_token since it is added later
+    prompt = prompt.split(tokenizer.bos_token)[-1]
     return prompt
 
 
@@ -261,14 +263,23 @@ class GeneralHfTorchDecoder(HfTorchDecoder):
         do_sample: bool = True,
         num_samples: int = 200,
         use_token_healing=False,
+        n_char_back: int = 0,
         token_healing_sample_constrained=False,
         token_healing_sample_predictions=False,
     ) -> List[str]:
         prompt = make_chat_prompt(prompt, self.tokenizer)
+
+        if n_char_back > 0:
+            prompt = prompt[:-n_char_back]
+
+        out = {
+            "prompt": prompt,
+        }
+
         if use_token_healing:
             if not self.token_map:
                 self.token_map = build_token_prefix_map(self.tokenizer)
-            encoded = self.tokenizer.encode(prompt)
+            encoded = self.tokenizer.encode(prompt, add_special_tokens=False)
             matches = get_start_decoding(self.token_map, self.tokenizer, encoded)
             healed_prompt = token_healing(
                 self.model,
@@ -278,9 +289,11 @@ class GeneralHfTorchDecoder(HfTorchDecoder):
                 sample_constrained=token_healing_sample_constrained,
                 sample_predictions=token_healing_sample_predictions,
             )
+            out["prompt_healed"] = healed_prompt
             prompt = healed_prompt
 
-        return HfTorchDecoder.codegen(self, prompt, do_sample, num_samples)
+        out["predictions"] = HfTorchDecoder.codegen(self, prompt, do_sample, num_samples)
+        return out["predictions"]
 
 
 class OpenAIChatDecoder(DecoderBase):
