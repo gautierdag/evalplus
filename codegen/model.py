@@ -80,7 +80,7 @@ Below is a Python script with a self-contained function that solves the problem 
         tokenize=False,
     ).split(_MAGIC_SPLITTER_)[0]
     # remove bos_token since it is added later
-    prompt = prompt.split(tokenizer.bos_token)[-1]
+    prompt = prompt.lstrip(tokenizer.bos_token)
     return prompt
 
 
@@ -292,7 +292,9 @@ class GeneralHfTorchDecoder(HfTorchDecoder):
             out["prompt_healed"] = healed_prompt
             prompt = healed_prompt
 
-        out["predictions"] = HfTorchDecoder.codegen(self, prompt, do_sample, num_samples)
+        out["predictions"] = HfTorchDecoder.codegen(
+            self, prompt, do_sample, num_samples
+        )
         return out["predictions"]
 
 
