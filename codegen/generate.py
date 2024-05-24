@@ -105,6 +105,7 @@ def codegen(
                     token_healing_sample_predictions=token_healing_sample_predictions,
                 )
                 assert outputs, "No outputs from model!"
+
                 if isinstance(outputs, dict):
                     # save to json
                     with open(
@@ -112,7 +113,7 @@ def codegen(
                         "w",
                         encoding="utf-8",
                     ) as f:
-                        json.dump(impl, f)
+                        json.dump(outputs, f)
                     # save preds to .py
                     outputs = outputs["predictions"]
 

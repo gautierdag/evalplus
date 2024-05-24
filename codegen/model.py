@@ -275,7 +275,6 @@ class GeneralHfTorchDecoder(HfTorchDecoder):
         out = {
             "prompt": prompt,
         }
-
         if use_token_healing:
             if not self.token_map:
                 self.token_map = build_token_prefix_map(self.tokenizer)
@@ -295,7 +294,7 @@ class GeneralHfTorchDecoder(HfTorchDecoder):
         out["predictions"] = HfTorchDecoder.codegen(
             self, prompt, do_sample, num_samples
         )
-        return out["predictions"]
+        return out
 
 
 class OpenAIChatDecoder(DecoderBase):
