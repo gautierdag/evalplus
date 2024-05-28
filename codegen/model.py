@@ -77,6 +77,8 @@ Below is a Python script with a self-contained function that solves the problem 
         ],
         tokenize=False,
     ).split(_MAGIC_SPLITTER_)[0]
+    if tokenizer.bos_token:
+        prompt = prompt.removeprefix(tokenizer.bos_token)
     return prompt
 
 
